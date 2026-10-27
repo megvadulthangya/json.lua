@@ -3,7 +3,7 @@ A lightweight JSON library for Lua
 
 
 ## Features
-* Implemented in pure Lua: works with 5.1, 5.2, 5.3 and JIT
+* Implemented in pure Lua: works with 5.1, 5.2, 5.3, 5.4, 5.5 and JIT
 * Fast: generally outperforms other pure Lua JSON implementations
   ([benchmark scripts](bench/))
 * Tiny: around 280sloc, 9kb
@@ -18,10 +18,15 @@ json = require "json"
 ```
 The library provides the following functions:
 
-#### json.encode(value)
-Returns a string representing `value` encoded in JSON.
+#### json.encode(value, options)
+Returns a string representing `value` encoded in JSON. The optional `options`
+table accepts:
+* `force_object` (boolean): when `true`, an empty table is encoded as `{}`
+  instead of `[]`.
+
 ```lua
-json.encode({ 1, 2, 3, { x = 10 } }) -- Returns '[1,2,3,{"x":10}]'
+json.encode({ 1, 2, 3, { x = 10 } })     -- Returns '[1,2,3,{"x":10}]'
+json.encode({}, { force_object = true }) -- Returns '{}'
 ```
 
 #### json.decode(str)
@@ -35,12 +40,18 @@ json.decode('[1,2,3,{"x":10}]') -- Returns { 1, 2, 3, { x = 10 } }
   in type conversion or other magic: sparse arrays, tables with mixed key types
   or invalid numbers (NaN, -inf, inf) will raise an error
 * `null` values contained within an array or object are converted to `nil` and
-  are therefore lost upon decoding
+  are therefore lost upon decoding, unless the array was created with
+  `table.pack` (which preserves the `n` field)
 * *Pretty* encoding is not supported, `json.encode()` only encodes to a compact
   format
+* Sparse arrays longer than `json.SPARSELIMIT` are encoded as objects instead of
+  arrays filled with `null` values, to avoid producing extremely large output.
+  Set `json.SPARSELIMIT = nil` to disable this protection, or assign a positive
+  number to change the threshold
+* Object keys are sorted before encoding, so encoding the same table always
+  produces the same JSON output
 
 
 ## License
 This library is free software; you can redistribute it and/or modify it under
 the terms of the MIT license. See [LICENSE](LICENSE) for details.
-

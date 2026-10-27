@@ -3,8 +3,11 @@ local bench = {}
 local unpack = unpack or table.unpack
 local fmt = string.format
 
-
 function bench.run(name, count, func)
+  -- Ensure all garbage from previous runs is collected
+  for _ = 1, 10 do
+    collectgarbage()
+  end
   -- Run bench
   local res = {}
   for i = 1, count do
@@ -28,7 +31,6 @@ function bench.run(name, count, func)
   }
 end
 
-
 function bench.get_cpu_name()
   local fp = io.open("/proc/cpuinfo", "rb")
   if not fp then
@@ -38,12 +40,10 @@ function bench.get_cpu_name()
   return text:match("model name%s*:%s*(.-)\n")
 end
 
-
 function bench.print_system_info()
   print( fmt("Lua version   : %s", jit and jit.version or _VERSION) )
   print( fmt("CPU name      : %s", bench.get_cpu_name()) )
 end
-
 
 function bench.print_results(results)
   -- Find best average
@@ -57,6 +57,5 @@ function bench.print_results(results)
                v.name, v.avg, v.avg / best, v.min, v.max) )
   end
 end
-
 
 return bench
